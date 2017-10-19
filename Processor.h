@@ -3,17 +3,18 @@
 
 #include "Picture.h"
 #include "Shapes.h"
+#include "Program.h"
 
 class Processor
 {
      Picture &target;
-     const ShapeInfo &shapeInfo;
      std::vector<Pixel> colors;
      int picw;
      int pich;
+     Program &program;
 
 public:
-     Processor(Picture &target, const ShapeInfo &shapeInfo, Pixel initialColor);
+     Processor(Picture &target, Program &program, Pixel initialColor);
 
      Picture pic;
 
