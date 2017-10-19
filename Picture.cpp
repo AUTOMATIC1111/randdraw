@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <string>
 #include <math.h>
+#include <cassert>
 
 static char bmp_data[] =
      "BM" "\0\0\0\0" "\0\0" "\0\0" "\x8a\0\0\0"
@@ -27,6 +28,11 @@ static void print_bmp_color(FILE *f, unsigned char r, unsigned char g, unsigned 
      unsigned char color_data[] = {b, g, r, 0xff};
 
      fwrite(color_data, sizeof(color_data), 1, f);
+}
+
+Picture::Picture()
+{
+
 }
 
 Picture::Picture(const char *filename)
@@ -64,16 +70,12 @@ Picture::Picture(const Picture &other)
 
 Picture::Picture(const Picture &other, int x, int y, int w, int h)
 {
-
-     if (x < 0) x = 0;
-     if (y < 0) y = 0;
-     if (x + 1 >= other.width) x = other.width - 1;
-     if (y + 1 >= other.height) y = other.height - 1;
-
-     if (w < 0) w = 0;
-     if (h < 0) h = 0;
-     if (x + w > other.width) w = other.width - x;
-     if (y + h > other.height) h = other.height - y;
+     assert(x >= 0);
+     assert(y >= 0);
+     assert(w > 0);
+     assert(h > 0);
+     assert(x + w <= other.width);
+     assert(y + h <= other.height);
 
      width = w;
      stride = w;
@@ -114,7 +116,7 @@ void Picture::ReadFromBMP(const char *filename)
 
           for (int x = 0; x < width; x++)
           {
-               Pixel *p=pixel(x, y);
+               Pixel *p = pixel(x, y);
                p->r = line[x * 4 + 2];
                p->g = line[x * 4 + 1];
                p->b = line[x * 4 + 0];
@@ -196,3 +198,36 @@ long long Picture::distance(Picture &other)
 
      return res;
 }
+
+PictureReference::PictureReference(const Picture &other, int x, int y, int w, int h) : reference(other)
+{
+     assert(x >= 0);
+     assert(y >= 0);
+     assert(w > 0);
+     assert(h > 0);
+     assert(x + w <= other.width);
+     assert(y + h <= other.height);
+
+     width = w;
+     stride = other.stride;
+     height = h;
+
+     pixels = other.pixels;
+
+     refX = x;
+     refY = y;
+}
+
+PictureReference::~PictureReference()
+{
+     pixels = nullptr;
+}
+
+PictureFragment::PictureFragment(const Picture &origin, const Picture &targetPic, int x, int y, int w, int h)
+     : Picture(origin, x, y, w, h),
+       target(targetPic, x, y, w, h),
+       improvement(0)
+{
+
+}
+

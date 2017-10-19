@@ -14,9 +14,10 @@ using namespace std::chrono;
 std::minstd_rand simple_rand;
 int randMax = simple_rand.max();
 int randMin = simple_rand.min();
+
 int randInt(int max)
 {
-     return (int)((long long)(simple_rand() - randMin) * max / (randMax - randMin));
+     return (int) ((long long) (simple_rand() - randMin) * max / (randMax - randMin));
 }
 
 #define min(a, b) ((a)<(b)?(a):(b))
@@ -28,18 +29,18 @@ void process(int iterations, Picture &target, Picture &pic)
      int picw = pic.w();
      int pich = pic.h();
 
-     std::map<Pixel,int> colorsMap;
+     std::map<Pixel, int> colorsMap;
      std::vector<Pixel> colors;
 
      for (int y = 0; y < pich; y++)
      {
           for (int x = 0; x < picw; x++)
           {
-               Pixel *pixel=target.pixel(x, y);
+               Pixel *pixel = target.pixel(x, y);
                colorsMap[*pixel]++;
           }
      }
-     for(auto const& iter: colorsMap)
+     for (auto const &iter: colorsMap)
           colors.push_back(iter.first);
 
      for (int i = 0; i < iterations; i++)
@@ -58,21 +59,17 @@ void process(int iterations, Picture &target, Picture &pic)
           int w = x2 - x1 + 1;
           int h = y2 - y1 + 1;
 
-          Picture edited(pic, x1, y1, w, h);
-          Picture original(pic, x1, y1, w, h);
-          Picture reference(target, x1, y1, w, h);
+          PictureFragment edited(pic, target, x1, y1, w, h);
 
           for (int x = 0; x < w; x++)
           {
                for (int y = 0; y < h; y++)
                {
-                    *edited.pixel(x, y) = color;
+                    edited.paint(x, y, color);
                }
           }
 
-          long long distanceToEdited = reference.distance(edited);
-          long long distanceToOriginal = reference.distance(original);
-          if (distanceToEdited < distanceToOriginal)
+          if (edited.improvement > 0)
           {
                pic.commit(x1, y1, edited);
           }

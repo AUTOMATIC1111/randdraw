@@ -1,4 +1,4 @@
-Draws a picture using shapes as descriped in thuis post:
+Draws a picture using shapes as described in this post:
 
 https://warosu.org/g/thread/S62885489
 
