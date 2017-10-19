@@ -64,11 +64,20 @@ public:
           return (Pixel *) &pixels[x + y * stride];
      }
 
+     virtual void paint(int x, int y, Pixel color)
+     {
+          *pixel(x, y) = color;
+     }
+
      int w()
-     { return width; }
+     {
+          return width;
+     }
 
      int h()
-     { return height; }
+     {
+          return height;
+     }
 
      void CopyFrom(const Picture &picture);
 
@@ -105,12 +114,13 @@ public:
      }
 };
 
-class PictureFragment : public Picture
+class PictureEditor : public Picture
 {
      PictureReference target;
+     PictureReference origin;
 
 public:
-     PictureFragment(const Picture &origin, const Picture &target, int x, int y, int w, int h);
+     PictureEditor(const Picture &origin, const Picture &target, int x, int y, int w, int h);
 
      int improvement;
 
@@ -125,10 +135,9 @@ public:
      void paint(int x, int y, Pixel color)
      {
           Pixel *targetPixel = target.pixel(x, y);
-          Pixel *p = pixel(x, y);
-          int originalDifference = diff(targetPixel, p);
-          *p = color;
-          int newDifference = diff(targetPixel, p);
+
+          int originalDifference = diff(targetPixel, origin.pixel(x, y));
+          int newDifference = diff(targetPixel, &color);
           improvement += originalDifference - newDifference;
      }
 };

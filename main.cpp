@@ -1,4 +1,6 @@
 #include "Picture.h"
+#include "Random.h"
+#include "Shapes.h"
 
 #include <cstdio>
 #include <string>
@@ -6,25 +8,10 @@
 #include <chrono>
 #include <iostream>
 #include <map>
-#include <vector>
-#include <random>
 
 using namespace std::chrono;
 
-std::minstd_rand simple_rand;
-int randMax = simple_rand.max();
-int randMin = simple_rand.min();
-
-int randInt(int max)
-{
-     return (int) ((long long) (simple_rand() - randMin) * max / (randMax - randMin));
-}
-
-#define min(a, b) ((a)<(b)?(a):(b))
-#define max(a, b) ((a)>(b)?(a):(b))
-
-
-void process(int iterations, Picture &target, Picture &pic)
+void process(int iterations, Picture &target, Picture &pic, const ShapeInfo &shapeInfo)
 {
      int picw = pic.w();
      int pich = pic.h();
@@ -45,56 +32,62 @@ void process(int iterations, Picture &target, Picture &pic)
 
      for (int i = 0; i < iterations; i++)
      {
-          Pixel color = colors[randInt(colors.size())];
+          Pixel color = colors[random.nextInt((int) colors.size())];
 
-          int radius = 1 + randInt(3);
-          int px = randInt(pic.w());
-          int py = randInt(pic.h());
 
-          int x1 = max(px - radius, 0);
-          int x2 = min(px + radius, picw - 1);
-          int y1 = max(py - radius, 0);
-          int y2 = min(py + radius, pich - 1);
+          int w, h;
+          shapeInfo.selectSize(w, h);
 
-          int w = x2 - x1 + 1;
-          int h = y2 - y1 + 1;
+          if (w > picw) w = picw;
+          if (h > pich) h = pich;
 
-          PictureFragment edited(pic, target, x1, y1, w, h);
+          int px = random.nextInt(picw - w);
+          int py = random.nextInt(pich - h);
 
-          for (int x = 0; x < w; x++)
-          {
-               for (int y = 0; y < h; y++)
-               {
-                    edited.paint(x, y, color);
-               }
-          }
+          unsigned int seed = random.seed();
+          PictureEditor edited(pic, target, px, py, w, h);
 
+          shapeInfo.draw(edited, color, w, h);
           if (edited.improvement > 0)
           {
-               pic.commit(x1, y1, edited);
+               PictureReference ref(pic, px, py, w, h);
+
+               random.seed(seed);
+               shapeInfo.draw(ref, color, w, h);
           }
      }
 }
 
 int main(int argc, char **argv)
 {
-     if (argc != 4)
+     if (argc < 3 || argc > 5)
      {
-          printf("Usage: %s <iterations> <source> <destination>\n", argv[0]);
+          printf("Usage: %s <source> <destination> [<shape> <iterations>]\n", argv[0]);
+          printf("Shape can be any of:\n");
+          for(const ShapeInfo &info: shapes){
+               printf("  %s\n",info.name);
+          }
           return 1;
      }
 
-     simple_rand.seed((unsigned int) time(NULL));
+     const char *input = argv[1];
+     const char *output = argv[2];
+     int iterations = argc > 4 ? std::stoi(argv[4]) : 100000;
+     std::string shapeName = argc > 3 ? argv[3] : "";
 
-     int iterations = std::stoi(argv[1]);
-     const char *input = argv[2];
-     const char *output = argv[3];
+     const ShapeInfo *info = &shapes[0];
+     for(const ShapeInfo &i: shapes){
+          if(shapeName == i.name){
+               info=&i;
+               break;
+          }
+     }
 
      Picture target(input);
      Picture pic(target.w(), target.h(), Pixel(0, 0, 0));
 
      high_resolution_clock::time_point t1 = high_resolution_clock::now();
-     process(iterations, target, pic);
+     process(iterations, target, pic, *info);
      high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
      pic.Save(output);

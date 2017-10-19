@@ -223,11 +223,11 @@ PictureReference::~PictureReference()
      pixels = nullptr;
 }
 
-PictureFragment::PictureFragment(const Picture &origin, const Picture &targetPic, int x, int y, int w, int h)
-     : Picture(origin, x, y, w, h),
+PictureEditor::PictureEditor(const Picture &originPic, const Picture &targetPic, int x, int y, int w, int h)
+     : origin(originPic, x, y, w, h),
        target(targetPic, x, y, w, h),
        improvement(0)
 {
-
+     pixels = nullptr;
 }
 
