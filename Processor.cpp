@@ -2,7 +2,7 @@
 
 #include <map>
 
-Processor::Processor(Picture &targetPic, Program &programVar, Pixel initialColor)
+Processor::Processor(Picture &targetPic, Program &programVar, Pixel initialColor, std::vector<Pixel> setColors)
      : program(programVar),
        target(targetPic),
        pic(targetPic.w(), targetPic.h(), initialColor)
@@ -10,19 +10,24 @@ Processor::Processor(Picture &targetPic, Program &programVar, Pixel initialColor
      picw = pic.w();
      pich = pic.h();
 
-     std::map<Pixel, int> colorsMap;
-
-     for (int y = 0; y < pich; y++)
+     if (setColors.empty())
      {
-          for (int x = 0; x < picw; x++)
+          std::map<Pixel, int> colorsMap;
+          for (int y = 0; y < pich; y++)
           {
-               Pixel *pixel = target.pixel(x, y);
-               colorsMap[*pixel]++;
+               for (int x = 0; x < picw; x++)
+               {
+                    Pixel *pixel = target.pixel(x, y);
+                    colorsMap[*pixel]++;
+               }
           }
-     }
-     for (auto const &iter: colorsMap)
+          for (auto const &iter: colorsMap)
+          {
+               colors.push_back(iter.first);
+          }
+     } else
      {
-          colors.push_back(iter.first);
+          colors = setColors;
      }
 }
 

@@ -14,7 +14,7 @@ class Processor
      Program &program;
 
 public:
-     Processor(Picture &target, Program &program, Pixel initialColor);
+     Processor(Picture &target, Program &program, Pixel initialColor, std::vector<Pixel> colors);
 
      Picture pic;
 

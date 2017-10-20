@@ -1,7 +1,7 @@
 #include "Picture.h"
 #include "Shapes.h"
 #include "Processor.h"
-#include "Program.h"
+#include "ColorExtractor.h"
 
 #include "cxxopts.hpp"
 
@@ -20,7 +20,8 @@ int main(int argc, char **argv)
 
      std::string input;
      std::string output;
-     int iterationsDump;
+     int iterationsDump=-1;
+     int colorCount=-1;
      std::string programLine;
      bool measureTime;
 
@@ -35,10 +36,11 @@ int main(int argc, char **argv)
                 shapesText, cxxopts::value<std::string>(programLine)->default_value("lines:100000"))
                ("d,dump",
                 "dump a picture to disk every N iterations; if you use this option, output filename should include %d in it, which will be replaced by a number",
-                cxxopts::value<int>(iterationsDump)->default_value("-1"))
+                cxxopts::value<int>(iterationsDump))
                ("f,input", "input image", cxxopts::value<std::string>(input))
                ("m,measure", "measure time taken", cxxopts::value<bool>(measureTime))
                ("o,output", "output image", cxxopts::value<std::string>(output))
+               ("c,colors", "limit number of colors to use when drawing", cxxopts::value<int>(colorCount))
                ("help", "Print help");
 
           options.parse_positional({"input", "output", "positional"});
@@ -66,26 +68,32 @@ int main(int argc, char **argv)
 
      Picture target(input.c_str());
 
+     std::vector<Pixel> colors;
+     if(colorCount>0){
+          ColorExtractor extractor(target, colorCount);
+          colors = extractor.colors;
+     }
+
      long long duration = 0;
      high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-     Processor procesor(target, program, Pixel(0, 0, 0));
+     Processor processor(target, program, Pixel(0, 0, 0), colors);
      if (iterationsDump == -1)
      {
-          procesor.iterate(iterations);
+          processor.iterate(iterations);
      } else
      {
           int generation = 0;
           for (int iteration = 0; iteration < iterations; iteration += iterationsDump)
           {
-               procesor.iterate(iterationsDump);
+               processor.iterate(iterationsDump);
 
                high_resolution_clock::time_point t2 = high_resolution_clock::now();
                duration += duration_cast<microseconds>(t2 - t1).count();
 
                char filename[1000];
                snprintf(filename, sizeof(filename), output.c_str(), generation);
-               procesor.pic.save(filename);
+               processor.pic.save(filename);
                generation++;
 
                t1 = high_resolution_clock::now();
@@ -97,7 +105,7 @@ int main(int argc, char **argv)
 
      if (iterationsDump == -1)
      {
-          procesor.pic.save(output.c_str());
+          processor.pic.save(output.c_str());
      }
 
      if (measureTime)

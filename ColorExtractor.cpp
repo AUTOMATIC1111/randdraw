@@ -21,9 +21,7 @@ ColorExtractor::ColorExtractor(const Picture &pic, int count)
 
      for (auto iter=colorMap.begin(); iter!=colorMap.end(); ++iter)
      {
-          Pixel p = iter->first;
           iter->second = sqrt(sqrt(iter->second));
-
      }
 
      struct Center

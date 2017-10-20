@@ -19,7 +19,7 @@ Usage:
                      squares, large-squares, lines (default: lines:100000)
   -d, --dump arg     dump a picture to disk every N iterations; if you use
                      this option, output filename should include %d in it, which
-                     will be replaced by a number (default: -1)
+                     will be replaced by a number
   -f, --input arg    input image
   -m, --measure      measure time taken
   -o, --output arg   output image
@@ -30,7 +30,7 @@ For example, if you run it as:
 
 `randdraw source.png destination.png -p 'large-squares:10000,lines:100000'`
 
-It will first do 10000 iterationstrung to paint small squares, then
+It will first do 10000 iterations to paint small squares, then
 100000 iterations drawing lines.
 
 This command will create multiple images:
