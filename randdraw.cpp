@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
      try
      {
-          cxxopts::Options options("randdraw", " - paint a picture using simple shapes");
+          cxxopts::Options options("randdraw", "Paint a picture using simple shapes");
           options.positional_help("<input> <output>");
 
           options.add_options()
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
                char filename[1000];
                snprintf(filename, sizeof(filename), output.c_str(), generation);
-               procesor.pic.Save(filename);
+               procesor.pic.save(filename);
                generation++;
 
                t1 = high_resolution_clock::now();
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 
      if (iterationsDump == -1)
      {
-          procesor.pic.Save(output.c_str());
+          procesor.pic.save(output.c_str());
      }
 
      if (measureTime)

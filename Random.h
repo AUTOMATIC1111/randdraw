@@ -7,6 +7,7 @@ class Random
 
 public:
      Random(int seed);
+     Random();
 
      unsigned int seed() { return seedValue; }
      void seed(unsigned int val);

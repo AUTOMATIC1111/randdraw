@@ -1,7 +1,56 @@
-Draws a picture using shapes as described in this post:
+Requirements
+============
 
-https://warosu.org/g/thread/S62885489
+ * imagemagick (the convert program, not any of libraries)
 
-Requires imagemagick installed, particularly the convert program.
+Program: randdraw
+=================
 
-Run as ranndraw <iterations> <source> <destination>
+Draws a picture using shapes as described in this post: https://warosu.org/g/thread/S62885489
+
+```
+Usage:
+  randdraw [OPTION...] <input> <output>
+
+  -p, --program arg  program; a list of comma separated pairs, each takes
+                     form of <shape>:<iterations>; for example
+                     lines:10000,squares:20000 means do 10000 iterations drawing lines, then
+                     20000 iterations drawing squares; possible shapes are:
+                     squares, large-squares, lines (default: lines:100000)
+  -d, --dump arg     dump a picture to disk every N iterations; if you use
+                     this option, output filename should include %d in it, which
+                     will be replaced by a number (default: -1)
+  -f, --input arg    input image
+  -m, --measure      measure time taken
+  -o, --output arg   output image
+      --help         Print help
+```
+
+For example, if you run it as:
+
+`randdraw source.png destination.png -p 'large-squares:10000,lines:100000'`
+
+It will first do 10000 iterationstrung to paint small squares, then
+100000 iterations drawing lines.
+
+This command will create multiple images:
+
+`randdraw source.png destination-%02d.png -d 2000 -p 'large-squares:10000,lines:100000'`
+
+Program: extract-colors
+=======================
+
+Get a list of important colors from an image. Colors will be written
+in #RRGGBB format to stdout, and additionally an image will be created
+with colors in it.
+
+```
+Usage:
+  extract-colors [OPTION...] <input> [<output>]
+
+  -f, --input arg   input image
+  -o, --output arg  output image with desired colorsi in it
+  -c, --count arg   how many colors to produce (default: 3)
+  -q, --quiet       do not output colors to stdout
+      --help        Print help
+```

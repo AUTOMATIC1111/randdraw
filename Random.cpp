@@ -1,10 +1,16 @@
 #include "Random.h"
 
+#include <ctime>
+
 #define MY_RAND_MAX 0x0fffffffU
 
 Random::Random(int val)
 {
      seed(val);
+}
+Random::Random()
+{
+     seed(time(NULL));
 }
 
 unsigned int Random::next()

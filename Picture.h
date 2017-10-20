@@ -52,7 +52,7 @@ public:
 
      virtual ~Picture();
 
-     void Save(const char *filename);
+     void save(const char *filename);
 
      virtual Pixel *pixel(int x, int y)
      {
@@ -69,12 +69,12 @@ public:
           *pixel(x, y) = color;
      }
 
-     int w()
+     int w() const
      {
           return width;
      }
 
-     int h()
+     int h() const
      {
           return height;
      }
@@ -86,9 +86,9 @@ public:
      long long distance(Picture &other);
 
 private:
-     void ReadFromBMP(const char *filename);
+     void readFromBMP(const char *filename);
 
-     void WriteToBmp(const char *filename);
+     void writeToBmp(const char *filename);
 
 };
 
@@ -124,7 +124,7 @@ public:
 
      int improvement;
 
-     int diff(const Pixel *a, const Pixel *b)
+     int colorDifference(const Pixel *a, const Pixel *b)
      {
           return
                abs((int) a->r - (int) b->r) +
@@ -136,8 +136,8 @@ public:
      {
           Pixel *targetPixel = target.pixel(x, y);
 
-          int originalDifference = diff(targetPixel, origin.pixel(x, y));
-          int newDifference = diff(targetPixel, &color);
+          int originalDifference = colorDifference(targetPixel, origin.pixel(x, y));
+          int newDifference = colorDifference(targetPixel, &color);
           improvement += originalDifference - newDifference;
      }
 };

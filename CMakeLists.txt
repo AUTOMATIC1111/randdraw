@@ -5,5 +5,29 @@ set(CMAKE_CXX_STANDARD 11)
 
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(SOURCE_FILES main.cpp Picture.cpp Picture.h Random.cpp Random.h Shapes.cpp Shapes.h Processor.cpp Processor.h Program.cpp Program.h)
-add_executable(randdraw ${SOURCE_FILES})
+set(COMMON_FILES
+        Picture.cpp
+        Random.cpp
+        Shapes.cpp
+        ColorExtractor.cpp
+
+        Picture.h
+        Random.h
+        Shapes.h
+        ColorExtractor.h
+)
+
+set(RANDDRAW_FILES
+        randdraw.cpp
+
+        Program.cpp
+        Processor.cpp
+
+        Program.h
+        Processor.h
+)
+
+add_executable(randdraw ${RANDDRAW_FILES} ${COMMON_FILES})
+
+add_executable(extract-colors extract-colors.cpp ${COMMON_FILES})
+

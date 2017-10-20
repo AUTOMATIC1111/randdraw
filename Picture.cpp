@@ -42,7 +42,7 @@ Picture::Picture(const char *filename)
 
      system(command.c_str());
 
-     ReadFromBMP(tempFilename.c_str());
+     readFromBMP(tempFilename.c_str());
 
      unlink(tempFilename.c_str());
 }
@@ -96,7 +96,7 @@ Picture::~Picture()
      }
 }
 
-void Picture::ReadFromBMP(const char *filename)
+void Picture::readFromBMP(const char *filename)
 {
      char header[0x8a];
      FILE *f = fopen(filename, "rb");
@@ -127,7 +127,7 @@ void Picture::ReadFromBMP(const char *filename)
      fclose(f);
 }
 
-void Picture::WriteToBmp(const char *filename)
+void Picture::writeToBmp(const char *filename)
 {
      FILE *f = fopen(filename, "wb");
 
@@ -145,10 +145,10 @@ void Picture::WriteToBmp(const char *filename)
      fclose(f);
 }
 
-void Picture::Save(const char *filename)
+void Picture::save(const char *filename)
 {
      std::string tempFilename = std::string(filename) + ".bmp";
-     WriteToBmp(tempFilename.c_str());
+     writeToBmp(tempFilename.c_str());
 
      std::string command = "convert \"" + tempFilename + "\" \"" + std::string(filename) + "\"";
      system(command.c_str());
