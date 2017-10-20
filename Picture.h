@@ -79,7 +79,7 @@ public:
           return height;
      }
 
-     void CopyFrom(const Picture &picture);
+     void copyFrom(const Picture &picture);
 
      void commit(int x, int y, Picture &pic);
 

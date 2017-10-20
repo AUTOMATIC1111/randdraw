@@ -4,6 +4,7 @@
 #include <string>
 #include <math.h>
 #include <cassert>
+#include <cstring>
 
 static char bmp_data[] =
      "BM" "\0\0\0\0" "\0\0" "\0\0" "\x8a\0\0\0"
@@ -40,7 +41,11 @@ Picture::Picture(const char *filename)
      std::string tempFilename = std::string(filename) + ".bmp";
      std::string command = "convert \"" + std::string(filename) + "\" +matte \"" + tempFilename + "\"";
 
-     system(command.c_str());
+     if (system(command.c_str()) != 0)
+     {
+          fprintf(stderr, "Running command failed: %s\n", command.c_str());
+          exit(1);
+     }
 
      readFromBMP(tempFilename.c_str());
 
@@ -65,7 +70,7 @@ Picture::Picture(const Picture &other)
      height = other.height;
      stride = other.width;
      pixels = new Pixel[width * height];
-     CopyFrom(other);
+     copyFrom(other);
 }
 
 Picture::Picture(const Picture &other, int x, int y, int w, int h)
@@ -100,6 +105,12 @@ void Picture::readFromBMP(const char *filename)
 {
      char header[0x8a];
      FILE *f = fopen(filename, "rb");
+     if (!f)
+     {
+          fprintf(stderr, "Couldn't open file %s for reading: %s\n", filename, strerror(errno));
+          exit(1);
+     }
+
      fread(header, 1, sizeof(header), f);
 
      width = *(int *) (header + 18);
@@ -130,6 +141,11 @@ void Picture::readFromBMP(const char *filename)
 void Picture::writeToBmp(const char *filename)
 {
      FILE *f = fopen(filename, "wb");
+     if (!f)
+     {
+          fprintf(stderr, "Couldn't open file %s for writing: %s\n", filename, strerror(errno));
+          exit(1);
+     }
 
      print_bmp_header(f, width, height);
 
@@ -151,12 +167,16 @@ void Picture::save(const char *filename)
      writeToBmp(tempFilename.c_str());
 
      std::string command = "convert \"" + tempFilename + "\" \"" + std::string(filename) + "\"";
-     system(command.c_str());
+     if (system(command.c_str()) != 0)
+     {
+          fprintf(stderr, "Running command failed: %s\n", command.c_str());
+          exit(1);
+     }
 
      unlink(tempFilename.c_str());
 }
 
-void Picture::CopyFrom(const Picture &other)
+void Picture::copyFrom(const Picture &other)
 {
      for (int line = 0; line < height; line++)
      {
