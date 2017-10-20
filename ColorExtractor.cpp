@@ -116,3 +116,38 @@ ColorExtractor::ColorExtractor(const Picture &pic, int count)
           colorUsage[pixel] = center.entryCount;
      }
 }
+
+
+void ColorExtractor::fillColormap(Picture &colormap, const Picture &pic)
+{
+     int w = pic.w();
+     int h = pic.h();
+     int colorCount = colors.size();
+
+     for (int y = 0; y < h; y++)
+     {
+          for (int x = 0; x < w; x++)
+          {
+               Pixel pixel=*pic.constPixel(x, y);
+
+               int choice = 0;
+               double choiceDistance = 99999;
+               for (int j = 0; j < colorCount; j++)
+               {
+                    Pixel &center = colors[j];
+                    double distance =
+                         abs(pixel.r - center.r) +
+                         abs(pixel.g - center.g) +
+                         abs(pixel.b - center.b);
+
+                    if (distance < choiceDistance)
+                    {
+                         choice = j;
+                         choiceDistance = distance;
+                    }
+               }
+
+               colormap.paint(x, y, colors[choice]);
+          }
+     }
+}

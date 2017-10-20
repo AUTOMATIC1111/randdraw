@@ -19,6 +19,7 @@ int main(int argc, char **argv)
 {
      std::string input;
      std::string output;
+     std::string colormap;
      bool quiet;
      int colorCount;
 
@@ -31,6 +32,7 @@ int main(int argc, char **argv)
                ("f,input", "input image", cxxopts::value<std::string>(input))
                ("o,output", "output image with desired colors in it", cxxopts::value<std::string>(output))
                ("c,count", "how many colors to produce", cxxopts::value<int>(colorCount)->default_value("3"))
+               ("m,colormap", "filename; output a picture that maps the produced palette to input picture", cxxopts::value<std::string>(colormap))
                ("q,quiet", "do not output colors to stdout", cxxopts::value<bool>(quiet))
                ("help", "Print help");
 
@@ -52,6 +54,12 @@ int main(int argc, char **argv)
      Picture pic(input.c_str());
 
      ColorExtractor extractor(pic, colorCount);
+
+     if(!colormap.empty()){
+          Picture colormapPic(pic.w(),pic.h(),Pixel(0,0,0));
+          extractor.fillColormap(colormapPic, pic);
+          colormapPic.save(colormap.c_str());
+     }
 
      if (!output.empty())
      {

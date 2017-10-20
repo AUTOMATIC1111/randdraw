@@ -13,6 +13,9 @@ public:
 
      std::vector<Pixel> colors;
      std::map<Pixel, int> colorUsage;
+
+
+     void fillColormap(Picture &colormap, const Picture &pic);
 };
 
 
