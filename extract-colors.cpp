@@ -3,88 +3,80 @@
 
 #include "cxxopts.hpp"
 
-void drawSquare(Picture &pic, const Pixel &color, int x1, int y1, int w, int h)
-{
-     for (int x = x1; x < x1 + w; x++)
-     {
-          for (int y = y1; y < y1 + h; y++)
-          {
-               pic.paint(x, y, color);
-          }
-     }
+void drawSquare(Picture &pic, const Pixel &color, int x1, int y1, int w, int h) {
+    for (int x = x1; x < x1 + w; x++) {
+        for (int y = y1; y < y1 + h; y++) {
+            pic.paint(x, y, color);
+        }
+    }
 }
 
 
-int main(int argc, char **argv)
-{
-     std::string input;
-     std::string output;
-     std::string colormap;
-     bool quiet;
-     int colorCount;
+int main(int argc, char **argv) {
+    std::string input;
+    std::string output;
+    std::string colormap;
+    bool quiet;
+    int colorCount;
 
-     try
-     {
-          cxxopts::Options options("extract-colors", "Gets a list of important colors from an image");
-          options.positional_help("<input> [<output>]");
+    try {
+        cxxopts::Options options("extract-colors", "Gets a list of important colors from an image");
+        options.positional_help("<input> [<output>]");
 
-          options.add_options()
-               ("f,input", "input image", cxxopts::value<std::string>(input))
-               ("o,output", "output image with desired colors in it", cxxopts::value<std::string>(output))
-               ("c,count", "how many colors to produce", cxxopts::value<int>(colorCount)->default_value("3"))
-               ("m,colormap", "filename; output a picture that maps the produced palette to input picture", cxxopts::value<std::string>(colormap))
-               ("q,quiet", "do not output colors to stdout", cxxopts::value<bool>(quiet))
-               ("help", "Print help");
+        options.add_options()
+                ("f,input", "input image", cxxopts::value<std::string>(input))
+                ("o,output", "output image with desired colors in it", cxxopts::value<std::string>(output))
+                ("c,count", "how many colors to produce", cxxopts::value<int>(colorCount)->default_value("3"))
+                ("m,colormap", "filename; output a picture that maps the produced palette to input picture",
+                 cxxopts::value<std::string>(colormap))
+                ("q,quiet", "do not output colors to stdout", cxxopts::value<bool>(quiet))
+                ("help", "Print help");
 
-          options.parse_positional({"input", "output", "positional"});
-          options.parse(argc, argv);
+        options.parse_positional({"input", "output", "positional"});
+        options.parse(argc, argv);
 
-          if (options.count("help") || input.empty() || colorCount < 1)
-          {
-               std::cout << options.help({""}) << std::endl;
-               exit(0);
-          }
-     }
-     catch (const cxxopts::OptionException &e)
-     {
-          std::cout << "error parsing options: " << e.what() << std::endl;
-          exit(1);
-     }
+        if (options.count("help") || input.empty() || colorCount < 1) {
+            std::cout << options.help({""}) << std::endl;
+            exit(0);
+        }
+    }
+    catch (const cxxopts::OptionException &e) {
+        std::cout << "error parsing options: " << e.what() << std::endl;
+        exit(1);
+    }
 
-     Picture pic(input.c_str());
+    Picture pic(input.c_str());
 
-     ColorExtractor extractor(pic, colorCount);
+    ColorExtractor extractor(pic, colorCount);
 
-     if(!colormap.empty()){
-          Picture colormapPic(pic.w(),pic.h(),Pixel(0,0,0));
-          extractor.fillColormap(colormapPic, pic);
-          colormapPic.save(colormap.c_str());
-     }
+    if (!colormap.empty()) {
+        Picture colormapPic(pic.w(), pic.h(), Pixel(0, 0, 0));
+        extractor.fillColormap(colormapPic, pic);
+        colormapPic.save(colormap.c_str());
+    }
 
-     if (!output.empty())
-     {
-          int cellWidth = 24;
-          int cellHeight = 48;
-          Picture palette(cellWidth * extractor.colors.size(), cellHeight, Pixel(0, 0, 0));
+    if (!output.empty()) {
+        int cellWidth = 24;
+        int cellHeight = 48;
+        Picture palette(cellWidth * extractor.colors.size(), cellHeight, Pixel(0, 0, 0));
 
-          int i=0;
-          for (auto iter=extractor.colorUsage.begin(); iter!=extractor.colorUsage.end(); ++iter)
-          {
-               drawSquare(palette, iter->first, cellWidth * i, 0, cellWidth, cellHeight);
-               i++;
-          }
 
-          palette.save(output.c_str());
-     }
+        for (int i = 0; i<extractor.colors.size(); i++) {
+            ColorExtractor::ColorInfo & info=extractor.colors[i];
+            Pixel p = info.pixel;
+            drawSquare(palette, p, cellWidth * i, 0, cellWidth, cellHeight);
+        }
 
-     if (!quiet)
-     {
-          for (auto iter=extractor.colorUsage.begin(); iter!=extractor.colorUsage.end(); ++iter)
-          {
-               Pixel p = iter->first;
-               printf("#%02x%02x%02x\n", p.r, p.g, p.b);
-          }
-     }
+        palette.save(output.c_str());
+    }
 
-     return 0;
+    if (!quiet) {
+        for (int i = 0; i<extractor.colors.size(); i++) {
+            ColorExtractor::ColorInfo & info=extractor.colors[i];
+            Pixel p = info.pixel;
+            printf("#%02x%02x%02x % 12d %f\n", p.r, p.g, p.b, info.usage, info.quality);
+        }
+    }
+
+    return 0;
 }

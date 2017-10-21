@@ -10,11 +10,13 @@ set(COMMON_FILES
         Random.cpp
         Shapes.cpp
         ColorExtractor.cpp
+        KMeans.cpp
 
         Picture.h
         Random.h
         Shapes.h
         ColorExtractor.h
+        KMeans.h
 )
 
 set(RANDDRAW_FILES

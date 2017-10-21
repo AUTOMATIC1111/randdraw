@@ -1,6 +1,6 @@
 @echo off
 
-set COMMAND=cmake-build-release\extract-colors.exe
+set COMMAND=%~dp0\cmake-build-release\extract-colors.exe
 set FILENAME=%1
 set FILE=%FILENAME%
 set FILE=%FILE:.png=%

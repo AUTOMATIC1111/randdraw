@@ -5,20 +5,19 @@
 #include "Shapes.h"
 #include "Program.h"
 
-class Processor
-{
-     Picture &target;
-     std::vector<Pixel> colors;
-     int picw;
-     int pich;
-     Program &program;
+class Processor {
+    Picture &target;
+    std::vector<Pixel> colors;
+    int picw;
+    int pich;
+    Program &program;
 
 public:
-     Processor(Picture &target, Program &program, Pixel initialColor, std::vector<Pixel> colors);
+    Processor(Picture &target, Program &program, Pixel initialColor, std::vector<Pixel> colors);
 
-     Picture pic;
+    Picture pic;
 
-     void iterate(int iterations);
+    void iterate(int iterations);
 };
 
 #endif //RANDDRAW_PROCESSOR_H

@@ -6,16 +6,20 @@
 #include <vector>
 #include <map>
 
-class ColorExtractor
-{
+class ColorExtractor {
 public:
-     ColorExtractor(const Picture &pic, int count);
+    ColorExtractor(const Picture &pic, int count);
 
-     std::vector<Pixel> colors;
-     std::map<Pixel, int> colorUsage;
+    struct ColorInfo{
+        Pixel pixel;
+        int usage;
+        double quality;
 
+        double l, a, b;
+    };
+    std::vector<ColorInfo> colors;
 
-     void fillColormap(Picture &colormap, const Picture &pic);
+    void fillColormap(Picture &colormap, const Picture &pic);
 };
 
 
