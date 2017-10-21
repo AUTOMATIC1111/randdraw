@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
         options.parse_positional({"input", "output", "positional"});
         options.parse(argc, argv);
 
-        if (options.count("help") || input.empty() || colorCount < 1) {
+        if (options.count("help") || input.empty() || colorCount < 0) {
             std::cout << options.help({""}) << std::endl;
             exit(0);
         }

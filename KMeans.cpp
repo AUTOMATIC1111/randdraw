@@ -27,6 +27,7 @@ double KMeans::distance(const std::vector<double> &a, const std::vector<double> 
     }
     return sqrt(dist);
 }
+
 /*
 double KMeans::distance(const std::vector<double> &a, const std::vector<double> &b) {
     double dist = 0;
@@ -37,35 +38,35 @@ double KMeans::distance(const std::vector<double> &a, const std::vector<double> 
 }
 */
 void KMeans::process(int k) {
-//    centers.push_back(Center{.value=std::vector<double>(dimensions, -200.0)});
-//    centers.push_back(Center{.value=std::vector<double>(dimensions, 200.0)});
-
-    int startingSize=centers.size();
-    while (centers.size() < k + startingSize) {
-        int choice = 0;
-        double choiceDistance = 0;
-
-        for (int i = 0; i < valueCount; i++) {
-            double dist = 9999;
-            for (int j = 0; j < centers.size(); j++) {
-//                dist += distance(values[i], centers[j].value);
-                double distanceToOneCenter = distance(values[i], centers[j].value);
-                if(distanceToOneCenter < dist) dist = distanceToOneCenter;
-            }
-
-            if (dist > choiceDistance) {
-                choice = i;
-                choiceDistance = dist;
-            }
-        }
-
-        centers.push_back(Center{.value=values[choice], .averageDistance=0.0, .entries=1});
+    bool adaptive = false;
+    if (k == 0) {
+        adaptive = true;
+        k = 2;
     }
 
-    centers=std::vector<Center>(centers.begin()+startingSize, centers.end());
-
+    int startingSize = centers.size();
     int iterations = 0;
     while (1) {
+        while (centers.size() < k) {
+            int choice = 0;
+            double choiceDistance = 0;
+
+            for (int i = 0; i < valueCount; i++) {
+                double dist = 9999;
+                for (int j = 0; j < centers.size(); j++) {
+                    double distanceToOneCenter = distance(values[i], centers[j].value);
+                    if (distanceToOneCenter < dist) dist = distanceToOneCenter;
+                }
+
+                if (dist > choiceDistance) {
+                    choice = i;
+                    choiceDistance = dist;
+                }
+            }
+
+            centers.push_back(Center{.value=values[choice], .averageDistance=0.0, .entries=1});
+        }
+
         std::vector<Center> newCenters;
         for (int i = 0; i < k; i++) {
             newCenters.push_back(Center{.value=zero, .averageDistance=0.0, .entries=0});
@@ -116,6 +117,21 @@ void KMeans::process(int k) {
         iterations++;
 
         if (totalMovement < 0.000001) {
+            if(adaptive){
+                double worstDistance = 0;
+
+                for (int i = 0; i < k; i++) {
+                    Center &center = centers[i];
+                    if(center.averageDistance > worstDistance)
+                        worstDistance = center.averageDistance;
+                }
+
+                if(worstDistance>15){
+                    k++;
+                    continue;
+                }
+            }
+
             break;
         }
     }

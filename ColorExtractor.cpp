@@ -109,7 +109,7 @@ ColorExtractor::ColorExtractor(const Picture &pic, int count) {
 
     kmeans.process(count);
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < kmeans.centers.size(); i++) {
         KMeans::Center &center = kmeans.centers[i];
 
         double r, g, b;
