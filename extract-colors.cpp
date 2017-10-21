@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
     std::string output;
     std::string colormap;
     bool quiet;
-    int colorCount;
+    int colorCount=0;
 
     try {
         cxxopts::Options options("extract-colors", "Gets a list of important colors from an image");
@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
         options.add_options()
                 ("f,input", "input image", cxxopts::value<std::string>(input))
                 ("o,output", "output image with desired colors in it", cxxopts::value<std::string>(output))
-                ("c,count", "how many colors to produce", cxxopts::value<int>(colorCount)->default_value("3"))
-                ("m,colormap", "filename; output a picture that maps the produced palette to input picture",
+                ("c,count", "how many colors to produce; if omitted, detected automatically", cxxopts::value<int>(colorCount))
+                ("m,colormap", "apply the produced palette and write result to specified colormap file",
                  cxxopts::value<std::string>(colormap))
                 ("q,quiet", "do not output colors to stdout", cxxopts::value<bool>(quiet))
                 ("help", "Print help");

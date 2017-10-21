@@ -16,6 +16,7 @@ void KMeans::add(std::vector<double> value, int weight) {
 
     values.push_back(value);
     weights.push_back(weight);
+    clusterNum.push_back(0);
     valueCount++;
 }
 
@@ -37,6 +38,29 @@ double KMeans::distance(const std::vector<double> &a, const std::vector<double> 
     return dist;
 }
 */
+
+static double acceptableLabDistance[] = {
+        1,
+        3,
+        2,
+        4,
+        6,
+        10,
+        12,
+        15,
+        25,
+        99999,
+};
+
+static double getAcceptableLabDistance(int colorCount) {
+    if (colorCount < 0) return acceptableLabDistance[0];
+
+    if (colorCount >= sizeof(acceptableLabDistance) / sizeof(acceptableLabDistance[0]))
+        colorCount = sizeof(acceptableLabDistance) / sizeof(acceptableLabDistance[0]) - 1;
+
+    return acceptableLabDistance[colorCount];
+}
+
 void KMeans::process(int k) {
     bool adaptive = false;
     if (k == 0) {
@@ -44,29 +68,28 @@ void KMeans::process(int k) {
         k = 2;
     }
 
-    int startingSize = centers.size();
-    int iterations = 0;
-    while (1) {
-        while (centers.size() < k) {
-            int choice = 0;
-            double choiceDistance = 0;
+    while (centers.size() < k) {
+        int choice = 0;
+        double choiceDistance = 0;
 
-            for (int i = 0; i < valueCount; i++) {
-                double dist = 9999;
-                for (int j = 0; j < centers.size(); j++) {
-                    double distanceToOneCenter = distance(values[i], centers[j].value);
-                    if (distanceToOneCenter < dist) dist = distanceToOneCenter;
-                }
-
-                if (dist > choiceDistance) {
-                    choice = i;
-                    choiceDistance = dist;
-                }
+        for (int i = 0; i < valueCount; i++) {
+            double dist = 9999;
+            for (int j = 0; j < centers.size(); j++) {
+                double distanceToOneCenter = distance(values[i], centers[j].value);
+                if (distanceToOneCenter < dist) dist = distanceToOneCenter;
             }
 
-            centers.push_back(Center{.value=values[choice], .averageDistance=0.0, .entries=1});
+            if (dist > choiceDistance) {
+                choice = i;
+                choiceDistance = dist;
+            }
         }
 
+        centers.push_back(Center{.value=values[choice], .averageDistance=0.0, .entries=1});
+    }
+
+    int iterations = 0;
+    while (1) {
         std::vector<Center> newCenters;
         for (int i = 0; i < k; i++) {
             newCenters.push_back(Center{.value=zero, .averageDistance=0.0, .entries=0});
@@ -93,7 +116,8 @@ void KMeans::process(int k) {
                 center.value[dim] += value[dim] * weight;
             }
             center.entries += weight;
-            center.averageDistance += choiceDistance;
+            center.averageDistance += choiceDistance * weight;
+            clusterNum[i] = choice;
         }
 
         double totalMovement = 0;
@@ -117,17 +141,16 @@ void KMeans::process(int k) {
         iterations++;
 
         if (totalMovement < 0.000001) {
-            if(adaptive){
-                double worstDistance = 0;
+            if (adaptive) {
+                double worstDistance;
+                int worstCenter=findWorstCenter(worstDistance);
 
-                for (int i = 0; i < k; i++) {
-                    Center &center = centers[i];
-                    if(center.averageDistance > worstDistance)
-                        worstDistance = center.averageDistance;
-                }
+                if (worstDistance > getAcceptableLabDistance(k) && worstCenter != -1) {
+                    int choice = findFurthestValueFromCenter(worstCenter);
 
-                if(worstDistance>15){
+                    centers.push_back(Center{.value=values[choice], .averageDistance=0.0, .entries=1});
                     k++;
+
                     continue;
                 }
             }
@@ -138,5 +161,46 @@ void KMeans::process(int k) {
 
 }
 
+int KMeans::findWorstCenter(double & distance) {
+    int k = centers.size();
+    double worstDistance = 0;
+    int worstCluster = -1;
 
+    int largestClusterSize = 0;
+    for (int i = 0; i < k; i++) {
+        Center &center = centers[i];
+        if (center.entries > largestClusterSize) {
+            largestClusterSize = center.entries;
+        }
+    }
 
+    for (int i = 0; i < k; i++) {
+        Center &center = centers[i];
+        double dist = sqrt(1.0 * center.entries / largestClusterSize) * center.averageDistance;
+
+        if (dist > worstDistance) {
+            worstDistance = dist;
+            worstCluster = i;
+        }
+    }
+
+    distance = worstDistance;
+    return worstCluster;
+}
+
+int KMeans::findFurthestValueFromCenter(int center) {
+    int choice = 0;
+    double dist = 0;
+    for (int i = 0; i < valueCount; i++) {
+        if (clusterNum[i] != center)
+            continue;
+
+        double distanceToWorstCenter = distance(values[i], centers[center].value) * weights[i];
+        if (distanceToWorstCenter > dist) {
+            dist = distanceToWorstCenter;
+            choice = i;
+        }
+    }
+
+    return choice;
+}

@@ -18,6 +18,9 @@ struct Pixel {
 
     Pixel() {}
 
+    static Pixel fromLab(double l, double a, double b);
+    void toLab(double &l, double &a, double &b) const;
+
     Pixel(unsigned char rr, unsigned char gg, unsigned char bb) {
         r = rr;
         g = gg;

@@ -23,6 +23,7 @@ Usage:
   -f, --input arg    input image
   -m, --measure      measure time taken
   -o, --output arg   output image
+  -c, --colors arg   limit number of colors to use when drawing
       --help         Print help
 ```
 
@@ -48,9 +49,12 @@ with colors in it.
 Usage:
   extract-colors [OPTION...] <input> [<output>]
 
-  -f, --input arg   input image
-  -o, --output arg  output image with desired colorsi in it
-  -c, --count arg   how many colors to produce (default: 3)
-  -q, --quiet       do not output colors to stdout
-      --help        Print help
+  -f, --input arg     input image
+  -o, --output arg    output image with desired colors in it
+  -c, --count arg     how many colors to produce; if omitted, detected
+                      automatically
+  -m, --colormap arg  apply the produced palette and write result to
+                      specified colormap file
+  -q, --quiet         do not output colors to stdout
+      --help          Print help
 ```

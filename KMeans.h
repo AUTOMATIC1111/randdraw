@@ -5,6 +5,7 @@
 
 class KMeans {
     std::vector<std::vector<double>> values;
+    std::vector<int> clusterNum;
     std::vector<int> weights;
     std::vector<double> zero;
     int dimensions;
@@ -12,6 +13,8 @@ class KMeans {
 
     double distance(const std::vector<double> & a, const std::vector<double> & b);
 
+    int findWorstCenter(double & distance);
+    int findFurthestValueFromCenter(int center);
 
 public:
     explicit KMeans(int dimensions);
@@ -27,6 +30,7 @@ public:
     void add(std::vector<double> value, int weight = 1);
 
     void process(int k);
+
 };
 
 
