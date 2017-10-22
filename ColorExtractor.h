@@ -2,13 +2,18 @@
 #define RANDDRAW_COLOREXTRACTOR_H
 
 #include "Picture.h"
+#include "KMeans.h"
 
 #include <vector>
 #include <map>
 
 class ColorExtractor {
 public:
-    ColorExtractor(const Picture &pic, int count);
+    ColorExtractor();
+
+    KMeans kmeans;
+    std::string comparisonFunction;
+    void extract(const Picture &pic, int count);
 
     struct ColorInfo{
         Pixel pixel;
@@ -18,6 +23,7 @@ public:
         double l, a, b;
     };
     std::vector<ColorInfo> colors;
+    std::map<Pixel, Pixel> mapping;
 
     void fillColormap(Picture &colormap, const Picture &pic);
 };

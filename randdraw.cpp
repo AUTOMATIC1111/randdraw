@@ -18,6 +18,7 @@ int main(int argc, char **argv) {
 
     std::string input;
     std::string output;
+    std::string colordist;
     int iterationsDump = -1;
     int colorCount = -1;
     std::string programLine;
@@ -38,6 +39,8 @@ int main(int argc, char **argv) {
                 ("m,measure", "measure time taken", cxxopts::value<bool>(measureTime))
                 ("o,output", "output image", cxxopts::value<std::string>(output))
                 ("c,colors", "limit number of colors to use when drawing", cxxopts::value<int>(colorCount))
+                ("colordist", "color distance function (for -c option only!); one of: Manhattan, Euclidean, CIE2000",
+                 cxxopts::value<std::string>(colordist))
                 ("help", "Print help");
 
         options.parse_positional({"input", "output", "positional"});
@@ -64,7 +67,10 @@ int main(int argc, char **argv) {
 
     std::vector<Pixel> colors;
     if (colorCount > 0) {
-        ColorExtractor extractor(target, colorCount);
+        ColorExtractor extractor;
+        if (!colordist.empty())
+            extractor.kmeans.setColorDistanceFunction(colordist);
+        extractor.extract(target, colorCount);
 
         for (int i = 0; i<extractor.colors.size(); i++) {
             ColorExtractor::ColorInfo & info=extractor.colors[i];

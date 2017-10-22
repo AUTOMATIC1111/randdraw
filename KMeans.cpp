@@ -1,26 +1,51 @@
 #include "KMeans.h"
 #include "Random.h"
+#include "CIEDE2000.h"
 
 #include <cassert>
 #include <cmath>
-
-static Random random;
+#include <algorithm>
 
 KMeans::KMeans(int dims) : zero(dims, 0.0) {
     dimensions = dims;
     valueCount = 0;
+    colorDistanceFunction = Euclidean;
 }
 
-void KMeans::add(std::vector<double> value, int weight) {
+int KMeans::add(std::vector<double> value, int weight) {
     assert(value.size() == dimensions);
+
+    int position = values.size();
 
     values.push_back(value);
     weights.push_back(weight);
-    clusterNum.push_back(0);
+    mapping.push_back(0);
     valueCount++;
+
+    return position;
 }
 
 double KMeans::distance(const std::vector<double> &a, const std::vector<double> &b) {
+    assert(a.size() == dimensions);
+    assert(b.size() == dimensions);
+
+    switch(colorDistanceFunction){
+        case Euclidean: return distanceEuclidean(a, b);
+        case Manhattan: return distanceManhattan(a, b);
+        case CIE2000: return distanceCIE2000(a, b);
+    }
+
+    return 0;
+}
+
+double KMeans::distanceManhattan(const std::vector<double> & a, const std::vector<double> & b){
+    double dist = 0;
+    for (int dim = 0; dim < dimensions; dim++) {
+        dist += abs(a[dim] - b[dim]);
+    }
+    return dist;
+}
+double KMeans::distanceEuclidean(const std::vector<double> & a, const std::vector<double> & b){
     double dist = 0;
     for (int dim = 0; dim < dimensions; dim++) {
         double v = a[dim] - b[dim];
@@ -28,16 +53,15 @@ double KMeans::distance(const std::vector<double> &a, const std::vector<double> 
     }
     return sqrt(dist);
 }
+double KMeans::distanceCIE2000(const std::vector<double> & a, const std::vector<double> & b){
+    assert(dimensions == 3);
 
-/*
-double KMeans::distance(const std::vector<double> &a, const std::vector<double> &b) {
-    double dist = 0;
-    for (int dim = 0; dim < dimensions; dim++) {
-        dist += abs(a[dim] - b[dim]);
-    }
-    return dist;
+    CIEDE2000::LAB labA{ .l=a[0], .a=a[1], .b=a[2]};
+    CIEDE2000::LAB labB{ .l=b[0], .a=b[1], .b=b[2]};
+
+    return CIEDE2000::CIEDE2000(labA, labB);
 }
-*/
+
 
 static double acceptableLabDistance[] = {
         1,
@@ -117,7 +141,7 @@ void KMeans::process(int k) {
             }
             center.entries += weight;
             center.averageDistance += choiceDistance * weight;
-            clusterNum[i] = choice;
+            mapping[i] = choice;
         }
 
         double totalMovement = 0;
@@ -158,7 +182,6 @@ void KMeans::process(int k) {
             break;
         }
     }
-
 }
 
 int KMeans::findWorstCenter(double & distance) {
@@ -192,7 +215,7 @@ int KMeans::findFurthestValueFromCenter(int center) {
     int choice = 0;
     double dist = 0;
     for (int i = 0; i < valueCount; i++) {
-        if (clusterNum[i] != center)
+        if (mapping[i] != center)
             continue;
 
         double distanceToWorstCenter = distance(values[i], centers[center].value) * weights[i];
@@ -203,4 +226,20 @@ int KMeans::findFurthestValueFromCenter(int center) {
     }
 
     return choice;
+}
+
+void KMeans::setColorDistanceFunction(KMeans::ColorDistanceFunction v) {
+    colorDistanceFunction=v;
+}
+
+void KMeans::setColorDistanceFunction(std::string name) {
+    std::string n = name;
+    std::transform(n.begin(), n.end(), n.begin(), ::tolower);
+
+    if(n == "e" || n == "euc" || n == "euclidean")
+        colorDistanceFunction=Euclidean;
+    else if(n == "m" || n == "man" || n == "manhattan")
+        colorDistanceFunction=Manhattan;
+    else if(n == "cie2000")
+        colorDistanceFunction=CIE2000;
 }
