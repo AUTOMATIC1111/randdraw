@@ -45,6 +45,36 @@ void drawLine(Picture &pic, const Pixel &color, int w, int h) {
     }
 }
 
+
+void drawCircle(Picture &pic, const Pixel &color, int x1, int y1, double radius, double alpha) {
+    int r=ceil(radius);
+    bool opaque = alpha>=1;
+
+    for (int x = x1-r; x <= x1+r; x++) {
+        for (int y = y1-r; y <= y1+r; y++) {
+            double distance = sqrt((x-x1)*(x-x1) + (y-y1)*(y-y1));
+            double diff = distance-radius;
+
+            if(diff>0.5)
+                continue;
+
+            if(diff<-0.5){
+                if(opaque)
+                    pic.paint(x, y, color);
+                else
+                    pic.paintWithAlpha(x, y, color, alpha);
+                continue;
+            }
+
+            pic.paintWithAlpha(x, y, color, alpha * (0.5-diff));
+        }
+    }
+}
+
+void drawCircleFixed(Picture &pic, const Pixel &color, int w, int h) {
+    drawCircle(pic, color, (w-1)/2, (h-1)/2, (w-1-random.nextDouble())/2, 1.0);
+}
+
 std::vector<ShapeInfo> shapes = {
         {
                 "squares",
@@ -73,6 +103,14 @@ std::vector<ShapeInfo> shapes = {
                     }
                 },
                 drawLine
+        },
+        {
+                "circles",
+                [](int &w, int &h) {
+                    w = 6;
+                    h = w;
+                },
+                drawCircleFixed
         }
 
 };

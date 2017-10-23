@@ -2,6 +2,7 @@
 #define RANDDRAW_PICTURE_H
 
 #include <math.h>
+#include <vector>
 
 struct Pixel {
     union {
@@ -19,12 +20,19 @@ struct Pixel {
     Pixel() {}
 
     static Pixel fromLab(double l, double a, double b);
+
     void toLab(double &l, double &a, double &b) const;
 
     Pixel(unsigned char rr, unsigned char gg, unsigned char bb) {
         r = rr;
         g = gg;
         b = bb;
+    }
+
+    void set(double rr, double gg, double bb){
+        r = (unsigned char) (rr < 0 ? 0 : rr >= 255 ? 255 : rr);
+        g = (unsigned char) (gg < 0 ? 0 : gg >= 255 ? 255 : gg);
+        b = (unsigned char) (bb < 0 ? 0 : bb >= 255 ? 255 : bb);
     }
 };
 
@@ -62,6 +70,13 @@ public:
         *pixel(x, y) = color;
     }
 
+    virtual void paintWithAlpha(int x, int y, Pixel color, double alpha) {
+        double q = 1.0 - alpha;
+
+        Pixel *p=pixel(x, y);
+        p->set(color.r * alpha + p->r * q, color.g * alpha + p->g * q, color.b * alpha + p->b * q);
+    }
+
     int w() const {
         return width;
     }
@@ -76,11 +91,11 @@ public:
 
     long long distance(Picture &other);
 
-private:
     void readFromBMP(const char *filename);
 
     void writeToBmp(const char *filename);
 
+    static Picture fromPalette(const std::vector<Pixel> palette);
 };
 
 class PictureReference : public Picture {
@@ -113,9 +128,9 @@ public:
 
     int colorDifference(const Pixel *a, const Pixel *b) {
         return
-                abs((int) a->r - (int) b->r) +
-                abs((int) a->g - (int) b->g) +
-                abs((int) a->b - (int) b->b);
+            abs((int) a->r - (int) b->r) +
+            abs((int) a->g - (int) b->g) +
+            abs((int) a->b - (int) b->b);
     }
 
     void paint(int x, int y, Pixel color) {
@@ -125,6 +140,16 @@ public:
         int newDifference = colorDifference(targetPixel, &color);
         improvement += originalDifference - newDifference;
     }
+
+
+    virtual void paintWithAlpha(int x, int y, Pixel color, double alpha) {
+        double q = 1.0 - alpha;
+
+        Pixel p=*origin.pixel(x, y);
+        p.set(color.r * alpha + p.r * q, color.g * alpha + p.g * q, color.b * alpha + p.b * q);
+        paint(x, y, p);
+    }
+
 };
 
 #endif //RANDDRAW_PICTURE_H

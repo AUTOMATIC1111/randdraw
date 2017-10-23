@@ -3,7 +3,7 @@
 #include "CIEDE2000.h"
 
 #include <cassert>
-#include <cmath>
+#include <math.h>
 #include <algorithm>
 
 KMeans::KMeans(int dims) : zero(dims, 0.0) {
@@ -85,6 +85,8 @@ static double getAcceptableLabDistance(int colorCount) {
     return acceptableLabDistance[colorCount];
 }
 
+#include "Picture.h"
+
 void KMeans::process(int k) {
     bool adaptive = false;
     if (k == 0) {
@@ -118,6 +120,15 @@ void KMeans::process(int k) {
         for (int i = 0; i < k; i++) {
             newCenters.push_back(Center{.value=zero, .averageDistance=0.0, .entries=0});
         }
+
+        /*
+        std::vector<Pixel> palette;
+        for (int i = 0; i < k; i++) {
+            Pixel p=Pixel::fromLab(centers[i].value[0], centers[i].value[1], centers[i].value[2]);
+            palette.push_back(p);
+        }
+        Picture::fromPalette(palette).save(("../"+std::to_string(100000+iterations)+".png").c_str());
+        */
 
         for (int i = 0; i < valueCount; i++) {
             std::vector<double> &value = values[i];

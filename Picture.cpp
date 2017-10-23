@@ -306,6 +306,27 @@ long long Picture::distance(Picture &other) {
     return res;
 }
 
+void drawSquare(Picture &pic, const Pixel &color, int x1, int y1, int w, int h) {
+    for (int x = x1; x < x1 + w; x++) {
+        for (int y = y1; y < y1 + h; y++) {
+            pic.paint(x, y, color);
+        }
+    }
+}
+
+Picture Picture::fromPalette(const std::vector<Pixel> palette){
+    int cellWidth = 24;
+    int cellHeight = 48;
+    Picture res(palette.size() * cellWidth, cellHeight, Pixel(0, 0, 0));
+
+    for (int i = 0; i < palette.size(); i++) {
+        Pixel p = palette[i];
+        drawSquare(res, p, cellWidth * i, 0, cellWidth, cellHeight);
+    }
+
+    return res;
+}
+
 PictureReference::PictureReference(const Picture &other, int x, int y, int w, int h) : reference(other) {
     assert(x >= 0);
     assert(y >= 0);

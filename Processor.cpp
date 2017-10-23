@@ -28,8 +28,11 @@ Processor::Processor(Picture &targetPic, Program &programVar, Pixel initialColor
 void Processor::iterate(int iterations) {
     while (iterations > 0) {
         const ShapeInfo *shapeInfo;
+        const Program::Instruction *instruction;
         int iterCount;
-        program.get(shapeInfo, iterCount);
+
+        program.get(instruction, iterCount);
+        shapeInfo=instruction->shape;
 
         if (iterCount == 0) break;
         if (iterCount > iterations) iterCount = iterations;
@@ -41,6 +44,8 @@ void Processor::iterate(int iterations) {
 
             int w, h;
             shapeInfo->selectSize(w, h);
+            w *= instruction->scale;
+            h *= instruction->scale;
 
             if (w > picw) w = picw;
             if (h > pich) h = pich;

@@ -6,10 +6,14 @@
 #include <string>
 
 class Program {
+public:
     struct Instruction {
         const ShapeInfo *shape;
         int iterations;
+        double scale;
     };
+
+protected:
     std::vector<Instruction> instructions;
     int currentInstruction;
     int currentIteration;
@@ -18,7 +22,7 @@ class Program {
 public:
     Program(std::string line);
 
-    void get(const ShapeInfo *&shape, int &iterations);
+    void get(const Instruction *&instruction, int &iterations);
 
     void advance(int iterations);
 

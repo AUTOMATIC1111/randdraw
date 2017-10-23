@@ -55,10 +55,12 @@ Program::Program(std::string line) {
 
     for (std::string command: split(line, ",")) {
         std::vector<std::string> args = split(trim(command), ":");
-        if (args.size() != 2) continue;
+        if (args.size() < 2) continue;
 
         std::string shapeName = args[0];
         std::string iterationsText = args[1];
+
+        Instruction instruction;
 
         trim(shapeName);
         int iterations = std::stol(trim(iterationsText));
@@ -68,18 +70,34 @@ Program::Program(std::string line) {
 
         const ShapeInfo *info = iter->second;
 
-        instructions.push_back(Instruction{.shape = info, .iterations = iterations});
+        instruction.shape = info;
+        instruction.iterations = iterations;
+        instruction.scale = 1.0;
+
+        for(int i=2;i<args.size();i++){
+            std::vector<std::string> kv = split(trim(args[i]), "=");
+            if (kv.size() != 2) continue;
+
+            std::string k = trim(kv[0]);
+            std::string v = trim(kv[1]);
+
+            if(k=="scale"){
+                instruction.scale = atof(v.c_str());
+            }
+        }
+
+        instructions.push_back(instruction);
         totalIterationsCount += iterations;
     }
 }
 
-void Program::get(const ShapeInfo *&shape, int &iterations) {
+void Program::get(const Instruction *&instruction, int &iterations) {
     if (currentInstruction == instructions.size()) {
         iterations = 0;
         return;
     }
 
-    shape = instructions[currentInstruction].shape;
+    instruction = &instructions[currentInstruction];
     iterations = instructions[currentInstruction].iterations - currentIteration;
 }
 

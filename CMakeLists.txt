@@ -12,6 +12,8 @@ set(COMMON_FILES
         ColorExtractor.cpp
         KMeans.cpp
         CIEDE2000.cpp
+        ColorExtractorKmeans.cpp
+        ColorExtractorRandom.cpp
 
         Picture.h
         Random.h
@@ -19,6 +21,8 @@ set(COMMON_FILES
         ColorExtractor.h
         KMeans.h
         CIEDE2000.h
+        ColorExtractorKmeans.h
+        ColorExtractorRandom.h
 )
 
 set(RANDDRAW_FILES

@@ -2,26 +2,22 @@
 #define RANDDRAW_COLOREXTRACTOR_H
 
 #include "Picture.h"
-#include "KMeans.h"
 
 #include <vector>
 #include <map>
 
 class ColorExtractor {
 public:
-    ColorExtractor();
-
-    KMeans kmeans;
-    std::string comparisonFunction;
-    void extract(const Picture &pic, int count);
+    virtual ~ColorExtractor();
 
     struct ColorInfo{
         Pixel pixel;
         int usage;
         double quality;
-
-        double l, a, b;
     };
+
+    virtual void extract(const Picture &pic, int count)=0;
+
     std::vector<ColorInfo> colors;
     std::map<Pixel, Pixel> mapping;
 
