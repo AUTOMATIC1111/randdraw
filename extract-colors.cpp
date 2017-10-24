@@ -1,5 +1,6 @@
 #include "ColorExtractorKmeans.h"
 #include "ColorExtractorRandom.h"
+#include "ColorExtractorFromPicture.h"
 
 #include "cxxopts.hpp"
 
@@ -9,6 +10,7 @@ int main(int argc, char **argv) {
     std::string colormap;
     std::string colordist;
     std::string method;
+    std::string colorsInput;
     bool quiet;
     int colorCount = 0;
 
@@ -28,6 +30,8 @@ int main(int argc, char **argv) {
             ("q,quiet", "do not output colors to stdout", cxxopts::value<bool>(quiet))
             ("colordist", "color distance function; one of: Manhattan, Euclidean, CIE2000",
              cxxopts::value<std::string>(colordist))
+            ("import-colors", "ignore colors in input image; instead read all colors from the one specified in this argument",
+             cxxopts::value<std::string>(colorsInput))
             ("help", "Print help");
         options.parse_positional({"input", "output", "positional"});
         options.parse(argc, argv);
@@ -46,9 +50,13 @@ int main(int argc, char **argv) {
 
     ColorExtractor *extractor;
 
-    if(method=="random"){
+    if(! colorsInput.empty()){
+        Picture pic(colorsInput.c_str());
+
+        extractor = new ColorExtractorFromPicture(pic);
+    } else if (method == "random") {
         extractor = new ColorExtractorRandom();
-    } else{
+    } else {
         ColorExtractorKmeans *e = new ColorExtractorKmeans();
         if (!colordist.empty())
             e->kmeans.setColorDistanceFunction(colordist);
