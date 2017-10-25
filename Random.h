@@ -1,6 +1,8 @@
 #ifndef RANDDRAW_RANDOM_H
 #define RANDDRAW_RANDOM_H
 
+#include <vector>
+
 class Random {
     unsigned int seedValue = 1;
 
@@ -18,6 +20,8 @@ public:
     unsigned int nextInt(int max);
 
     unsigned int nextInt(int min, int max);
+
+    std::vector<double> nextLabColor();
 
     double nextDouble();
 };

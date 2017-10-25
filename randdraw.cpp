@@ -1,7 +1,8 @@
 #include "Picture.h"
 #include "Shapes.h"
 #include "Processor.h"
-#include "ColorExtractor.h"
+#include "ColorExtractorKmeans.h"
+#include "ColorExtractorFromPicture.h"
 
 #include "cxxopts.hpp"
 
@@ -25,6 +26,7 @@ int main(int argc, char **argv) {
     std::string programLine;
     bool measureTime;
     bool createWebm;
+    std::string colorsInput;
 
     try {
         cxxopts::Options options("randdraw", "Paint a picture using simple shapes");
@@ -44,6 +46,12 @@ int main(int argc, char **argv) {
             ("webm", "produce a video; use together with --dump", cxxopts::value<bool>(createWebm))
             ("colordist", "color distance function (for -c option only!); one of: Manhattan, Euclidean, CIE2000",
              cxxopts::value<std::string>(colordist))
+            ("import-colors", "read all colors from the image specified in this argument (instead of from input image)",
+             cxxopts::value<std::string>(colorsInput))
+            ("allow-worse", "also commit edits to image that make it look less like input image - if the decrease in "
+                 "likeness is not too large; the numeric argument specifies the threshold for throwing edits away; "
+                 " a value of 0.5 is a good start",
+             cxxopts::value<double>(Processor::allowWorseMultiplier))
             ("help", "Print help");
 
         options.parse_positional({"input", "output", "positional"});
@@ -69,24 +77,33 @@ int main(int argc, char **argv) {
     Picture target(input.c_str());
 
     std::vector<Pixel> colors;
+    ColorExtractor *colorExtractor=NULL;
     if (colorCount > 0) {
-        ColorExtractor extractor;
+        Picture colorPic((colorsInput.empty() ? input : colorsInput).c_str());
+        ColorExtractorKmeans *extractor=new ColorExtractorKmeans();
         if (!colordist.empty())
-            extractor.kmeans.setColorDistanceFunction(colordist);
-        extractor.extract(target, colorCount);
+            extractor->kmeans.setColorDistanceFunction(colordist);
+        extractor->extract(colorPic, colorCount);
+        colorExtractor=extractor;
+    } else if(! colorsInput.empty()){
+        ColorExtractorFromPicture *extractor = new ColorExtractorFromPicture(colorsInput.c_str());
+        extractor->extract(colorsInput.c_str(), 0);
+        colorExtractor=extractor;
+    }
 
-        for (int i = 0; i < extractor.colors.size(); i++) {
-            ColorExtractor::ColorInfo &info = extractor.colors[i];
+    if(colorExtractor!=NULL){
+        for (int i = 0; i < colorExtractor->colors.size(); i++) {
+            ColorExtractor::ColorInfo &info = colorExtractor->colors[i];
             Pixel p = info.pixel;
             colors.push_back(p);
         }
-
+        delete colorExtractor;
     }
 
     long long duration = 0;
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    Processor processor(target, program, Pixel(0, 0, 0), colors);
+    Processor processor(target, program, colors.empty() ? Pixel(0, 0, 0) : colors[0], colors);
     if (iterationsDump == -1) {
         processor.iterate(iterations);
     } else {

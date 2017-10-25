@@ -1,5 +1,6 @@
 #include "ColorExtractorRandom.h"
 #include "Random.h"
+#include "VectorStack.h"
 
 ColorExtractorRandom::ColorExtractorRandom() {
 
@@ -7,21 +8,11 @@ ColorExtractorRandom::ColorExtractorRandom() {
 
 static Random random;
 
-
-static double distanceEuclidean(const std::vector<double> & a, const std::vector<double> & b){
-    double dist = 0;
-    for (int dim = 0; dim < 3; dim++) {
-        double v = a[dim] - b[dim];
-        dist += v * v;
-    }
-    return sqrt(dist);
-}
-
 void ColorExtractorRandom::extract(const Picture &pic, int count) {
     int w = pic.w();
     int h = pic.h();
 
-    struct Info{
+    struct Info {
         int usage;
         std::vector<double> lab;
     };
@@ -32,80 +23,69 @@ void ColorExtractorRandom::extract(const Picture &pic, int count) {
             Pixel pixel = *pic.constPixel(x, y);
 
             auto iter = colorMap.find(pixel);
-            if(iter==colorMap.end()){
+            if (iter == colorMap.end()) {
                 double l, a, b;
                 pixel.toLab(l, a, b);
 
-                colorMap[pixel]=Info{ .usage=1, .lab=std::vector<double>{ l, a, b } };
-            } else{
+                colorMap[pixel] = Info{.usage=1, .lab=std::vector<double>{l, a, b}};
+            } else {
                 colorMap[pixel].usage++;
             }
         }
     }
 
-    std::vector<std::vector<double>> palette;
-    for(int i=0;i<count;i++)
-        palette.push_back(std::vector<double>{ 0, 0, 0 });
-    double bestDistance = 999999999999999;
+    VectorStack palette(3);
 
-    int iterationsWithoutImprovement=0;
-    for(int iteration=0;iteration<10000;iteration++){
-        if(iterationsWithoutImprovement>2000)
+    for (int i = 0; i < count; i++)
+        palette.add(random.nextLabColor(), 1.0);
+
+    double bestDistance;
+
+    int iterationsWithoutImprovement = 0;
+    for (int iteration = 0; iteration < 10000; iteration++) {
+        if (iterationsWithoutImprovement > 2000)
             break;
 
-        std::vector<double> newColor = std::vector<double>{ random.nextDouble()*100, random.nextDouble()*256-128, random.nextDouble()*256-128 };
-        int newIndex=random.nextInt(count);
+        int newIndex = random.nextInt(count - 1);
+        std::vector<double> oldColor = palette.value(newIndex);
+        palette.value(newIndex) = random.nextLabColor();
 
         double distance = 0;
         for (auto iter = colorMap.begin(); iter != colorMap.end(); ++iter) {
             const Pixel &pixel = iter->first;
-            int weight = iter->second.usage;
-            std::vector<double> & lab = iter->second.lab;
 
-            double chosenDistance=99999;
-            for(int i=0;i<count;i++){
-                double dist = distanceEuclidean(lab, i == newIndex ? newColor : palette[i]);
-                if(dist < chosenDistance)
-                    chosenDistance = dist;
-            }
+            double chosenDistance;
+            palette.findClosest(iter->second.lab, chosenDistance);
+            distance += chosenDistance * iter->second.usage;
 
-            distance += chosenDistance * weight;
-
-            if(distance>=bestDistance)
+            if (distance >= bestDistance && iteration>0)
                 break;
         }
 
-        if(distance < bestDistance){
+        if (iteration==0 || distance < bestDistance) {
             bestDistance = distance;
-            palette[newIndex] = newColor;
-            iterationsWithoutImprovement=0;
-            printf("% 12d %f\n",iteration,distance/w/h);
-        } else{
+            iterationsWithoutImprovement = 0;
+            printf("% -12d %f\n", iteration, distance / w / h);
+        } else {
+            palette.value(newIndex) = oldColor;
             iterationsWithoutImprovement++;
         }
     }
 
+    std::vector<int> paletteUsage(count, 0);
     for (auto iter = colorMap.begin(); iter != colorMap.end(); ++iter) {
         const Pixel &pixel = iter->first;
-        std::vector<double> & lab = iter->second.lab;
+        std::vector<double> &lab = iter->second.lab;
 
-        int choice=0;
-        int chosenDistance=99999;
-        for(int i=0;i<count;i++){
-            double dist = distanceEuclidean(lab, palette[i]);
-            if(dist < chosenDistance){
-                choice=i;
-                chosenDistance = dist;
-            }
-        }
-
-        std::vector<double> & labChoice = palette[choice];
-        mapping[pixel]=Pixel::fromLab(labChoice[0],labChoice[1],labChoice[2]);
+        int index = palette.findClosest(lab);
+        mapping[pixel] = Pixel::fromLab(palette.value(index));
+        paletteUsage[index] += iter->second.usage;
     }
 
-    for(int i=0;i<count;i++){
-        std::vector<double> & labChoice = palette[i];
+    for (int i = 0; i < count; i++) {
+        std::vector<double> &labChoice = palette.value(i);
 
-        colors.push_back(ColorInfo{ .pixel=Pixel::fromLab(labChoice[0],labChoice[1],labChoice[2]), .usage=0, .quality=0 });
+        colors.push_back(
+            ColorInfo{.pixel=Pixel::fromLab(labChoice[0], labChoice[1], labChoice[2]), .usage=paletteUsage[i], .quality=0});
     }
 }

@@ -26,6 +26,10 @@ unsigned int Random::nextInt(int min, int max) {
     return min + nextInt(max - min);
 }
 
+std::vector<double> Random::nextLabColor() {
+    return std::vector<double>{ nextDouble()*100, nextDouble()*256-128, nextDouble()*256-128 };
+}
+
 void Random::seed(unsigned int val) {
     seedValue = val & MY_RAND_MAX;
 }

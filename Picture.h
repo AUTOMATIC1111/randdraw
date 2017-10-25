@@ -20,8 +20,11 @@ struct Pixel {
     Pixel() {}
 
     static Pixel fromLab(double l, double a, double b);
+    static Pixel fromLab(std::vector<double> lab);
+
 
     void toLab(double &l, double &a, double &b) const;
+    std::vector<double> toLab() const;
 
     Pixel(unsigned char rr, unsigned char gg, unsigned char bb) {
         r = rr;

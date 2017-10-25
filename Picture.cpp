@@ -140,8 +140,31 @@ Pixel Pixel::fromLab(double l, double a, double b){
     return Pixel(rr, gg, bb);
 }
 
+Pixel Pixel::fromLab(std::vector<double> lab){
+    assert(lab.size() >= 3);
+
+    double rr, gg, bb;
+
+    lab2rgb(lab[0], lab[1], lab[2], rr, gg, bb);
+
+    if(rr>255) rr=255;
+    if(gg>255) gg=255;
+    if(bb>255) bb=255;
+    if(rr<0) rr=0;
+    if(gg<0) gg=0;
+    if(bb<0) bb=0;
+
+    return Pixel(rr, gg, bb);
+}
+
 void Pixel::toLab(double &ll, double &aa, double &bb) const{
     rgb2lab(r, g, b, ll, aa, bb);
+}
+std::vector<double> Pixel::toLab() const{
+    double ll, aa, bb;
+    rgb2lab(r, g, b, ll, aa, bb);
+
+    return std::vector<double>{ ll, aa, bb };
 }
 
 

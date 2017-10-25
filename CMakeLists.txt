@@ -15,7 +15,9 @@ set(COMMON_FILES
         ColorExtractorKmeans.cpp
         ColorExtractorRandom.cpp
         ColorExtractorFromPicture.cpp
+        VectorStack.cpp
 
+        cxxopts.hpp
         Picture.h
         Random.h
         Shapes.h
@@ -25,6 +27,7 @@ set(COMMON_FILES
         ColorExtractorKmeans.h
         ColorExtractorRandom.h
         ColorExtractorFromPicture.h
+        VectorStack.h
 )
 
 set(RANDDRAW_FILES

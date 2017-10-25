@@ -13,6 +13,8 @@ class Processor {
     Program &program;
 
 public:
+    static double allowWorseMultiplier;
+
     Processor(Picture &target, Program &program, Pixel initialColor, std::vector<Pixel> colors);
 
     Picture pic;

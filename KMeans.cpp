@@ -1,67 +1,20 @@
 #include "KMeans.h"
 #include "Random.h"
-#include "CIEDE2000.h"
 
 #include <cassert>
 #include <math.h>
 #include <algorithm>
 
-KMeans::KMeans(int dims) : zero(dims, 0.0) {
+KMeans::KMeans(int dims) : zero(dims, 0.0), values(dims), centersStack(dims) {
     dimensions = dims;
-    valueCount = 0;
-    colorDistanceFunction = Euclidean;
 }
 
-int KMeans::add(std::vector<double> value, int weight) {
+int KMeans::add(std::vector<double> value, double weight) {
     assert(value.size() == dimensions);
 
-    int position = values.size();
-
-    values.push_back(value);
-    weights.push_back(weight);
     mapping.push_back(0);
-    valueCount++;
-
-    return position;
+    return values.add(value, weight);
 }
-
-double KMeans::distance(const std::vector<double> &a, const std::vector<double> &b) {
-    assert(a.size() == dimensions);
-    assert(b.size() == dimensions);
-
-    switch(colorDistanceFunction){
-        case Euclidean: return distanceEuclidean(a, b);
-        case Manhattan: return distanceManhattan(a, b);
-        case CIE2000: return distanceCIE2000(a, b);
-    }
-
-    return 0;
-}
-
-double KMeans::distanceManhattan(const std::vector<double> & a, const std::vector<double> & b){
-    double dist = 0;
-    for (int dim = 0; dim < dimensions; dim++) {
-        dist += abs(a[dim] - b[dim]);
-    }
-    return dist;
-}
-double KMeans::distanceEuclidean(const std::vector<double> & a, const std::vector<double> & b){
-    double dist = 0;
-    for (int dim = 0; dim < dimensions; dim++) {
-        double v = a[dim] - b[dim];
-        dist += v * v;
-    }
-    return sqrt(dist);
-}
-double KMeans::distanceCIE2000(const std::vector<double> & a, const std::vector<double> & b){
-    assert(dimensions == 3);
-
-    CIEDE2000::LAB labA{ .l=a[0], .a=a[1], .b=a[2]};
-    CIEDE2000::LAB labB{ .l=b[0], .a=b[1], .b=b[2]};
-
-    return CIEDE2000::CIEDE2000(labA, labB);
-}
-
 
 static double acceptableLabDistance[] = {
         1,
@@ -85,8 +38,6 @@ static double getAcceptableLabDistance(int colorCount) {
     return acceptableLabDistance[colorCount];
 }
 
-#include "Picture.h"
-
 void KMeans::process(int k) {
     bool adaptive = false;
     if (k == 0) {
@@ -95,23 +46,10 @@ void KMeans::process(int k) {
     }
 
     while (centers.size() < k) {
-        int choice = 0;
-        double choiceDistance = 0;
+        int choice = values.findFurthest(centersStack);
 
-        for (int i = 0; i < valueCount; i++) {
-            double dist = 9999;
-            for (int j = 0; j < centers.size(); j++) {
-                double distanceToOneCenter = distance(values[i], centers[j].value);
-                if (distanceToOneCenter < dist) dist = distanceToOneCenter;
-            }
-
-            if (dist > choiceDistance) {
-                choice = i;
-                choiceDistance = dist;
-            }
-        }
-
-        centers.push_back(Center{.value=values[choice], .averageDistance=0.0, .entries=1});
+        centers.push_back(Center{.value=values.value(choice), .averageDistance=0.0, .entries=1});
+        centersStack.add(values.value(choice), 1);
     }
 
     int iterations = 0;
@@ -121,30 +59,12 @@ void KMeans::process(int k) {
             newCenters.push_back(Center{.value=zero, .averageDistance=0.0, .entries=0});
         }
 
-        /*
-        std::vector<Pixel> palette;
-        for (int i = 0; i < k; i++) {
-            Pixel p=Pixel::fromLab(centers[i].value[0], centers[i].value[1], centers[i].value[2]);
-            palette.push_back(p);
-        }
-        Picture::fromPalette(palette).save(("../"+std::to_string(100000+iterations)+".png").c_str());
-        */
+        for (int i = 0; i < values.size(); i++) {
+            std::vector<double> &value = values.value(i);
+            int weight = values.weight(i);
 
-        for (int i = 0; i < valueCount; i++) {
-            std::vector<double> &value = values[i];
-            int weight = weights[i];
-
-            int choice = 0;
-            double choiceDistance = 99999;
-            for (int j = 0; j < k; j++) {
-                Center &center = centers[j];
-                double dist = distance(value, center.value);
-
-                if (dist < choiceDistance) {
-                    choice = j;
-                    choiceDistance = dist;
-                }
-            }
+            double choiceDistance;
+            int choice = centersStack.findClosest(value, choiceDistance);
 
             Center &center = newCenters[choice];
             for (int dim = 0; dim < dimensions; dim++) {
@@ -173,6 +93,9 @@ void KMeans::process(int k) {
         }
 
         centers = newCenters;
+        for (int i = 0; i < k; i++) {
+            centersStack.value(i) = centers[i].value;
+        }
         iterations++;
 
         if (totalMovement < 0.000001) {
@@ -183,7 +106,8 @@ void KMeans::process(int k) {
                 if (worstDistance > getAcceptableLabDistance(k) && worstCenter != -1) {
                     int choice = findFurthestValueFromCenter(worstCenter);
 
-                    centers.push_back(Center{.value=values[choice], .averageDistance=0.0, .entries=1});
+                    centers.push_back(Center{.value=values.value(choice), .averageDistance=0.0, .entries=1});
+                    centersStack.add(values.value(choice), 1);
                     k++;
 
                     continue;
@@ -225,11 +149,11 @@ int KMeans::findWorstCenter(double & distance) {
 int KMeans::findFurthestValueFromCenter(int center) {
     int choice = 0;
     double dist = 0;
-    for (int i = 0; i < valueCount; i++) {
+    for (int i = 0; i < values.size(); i++) {
         if (mapping[i] != center)
             continue;
 
-        double distanceToWorstCenter = distance(values[i], centers[center].value) * weights[i];
+        double distanceToWorstCenter = centersStack.distance(values.value(i), centers[center].value);
         if (distanceToWorstCenter > dist) {
             dist = distanceToWorstCenter;
             choice = i;
@@ -239,18 +163,7 @@ int KMeans::findFurthestValueFromCenter(int center) {
     return choice;
 }
 
-void KMeans::setColorDistanceFunction(KMeans::ColorDistanceFunction v) {
-    colorDistanceFunction=v;
-}
-
 void KMeans::setColorDistanceFunction(std::string name) {
-    std::string n = name;
-    std::transform(n.begin(), n.end(), n.begin(), ::tolower);
-
-    if(n == "e" || n == "euc" || n == "euclidean")
-        colorDistanceFunction=Euclidean;
-    else if(n == "m" || n == "man" || n == "manhattan")
-        colorDistanceFunction=Manhattan;
-    else if(n == "cie2000")
-        colorDistanceFunction=CIE2000;
+    values.setColorDistanceFunction(name);
+    centersStack.setColorDistanceFunction(name);
 }
