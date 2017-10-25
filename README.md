@@ -1,7 +1,8 @@
 Requirements
 ============
 
- * imagemagick (the convert program, not any of libraries)
+ * imagemagick's convert program
+ * ffmpeg (optional, for --webm option)
 
 Program: randdraw
 =================
